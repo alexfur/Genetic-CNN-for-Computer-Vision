@@ -1,131 +1,25 @@
-# USAGE
-
-import matplotlib
-matplotlib.use("Agg")
-from models.CNN import model
-from sklearn.metrics import classification_report
-from keras.datasets import fashion_mnist
-from keras.utils import np_utils
-from keras.models import  load_model
-from imutils import build_montages
-import matplotlib.pyplot as plt
-import numpy as np
-import cv2
-
+import yaml
+from data_loaders.data_loader import load_and_preprocess_data
+from models.cnn_model import CNNModel
+from trainers.cnn_trainer import Trainer
+from utils.model_utils import *
 
 #model = load_model('cnn_model.h5')
 
+config = yaml.safe_load(open('configs/config.yaml'))    # get config
 
-# initialize the number of epochs to train for, base learning rate,
-# and batch size
-NUM_EPOCHS = 1
-#INIT_LR = 1e-2
-BS = 32
+data = load_and_preprocess_data(config)                 # get fashion mnist data
 
-# grab the Fashion MNIST dataset (if this is your first time running
-# this the dataset will be automatically downloaded)
-print("[INFO] loading Fashion MNIST...")
-((trainX, trainY), (testX, testY)) = fashion_mnist.load_data()              # clothing item, label
+trainer = Trainer(CNNModel.build(), config, data)       # initialise trainer with a newly initialised model
 
-trainX = trainX[:5000]
-trainY = trainY[:5000]
-testX = testX[:5000]
-testY = testY[:5000]
+generate_model_summary(trainer.model)                   # summary of the model structure
 
-trainX = trainX.reshape((trainX.shape[0], 28, 28, 1))
-testX = testX.reshape((testX.shape[0], 28, 28, 1))
+training_history = trainer.train()                      # train the model, save historical stats over epochs
 
-# scale data to the range of [0, 1]
-trainX = trainX.astype("float32") / 255.0
-testX = testX.astype("float32") / 255.0
+generate_classification_report(trainer.model, data)     # make predictions on test set and generate corresponding classification report
 
-# one-hot encode the training and testing labels
-trainY = np_utils.to_categorical(trainY, 10)
-testY = np_utils.to_categorical(testY, 10)
+generate_training_stats_plot(config, training_history)  # plot the training loss and accuracy
 
-# initialize the label names
-labelNames = ["top", "trouser", "pullover", "dress", "coat",
-              "sandal", "shirt", "sneaker", "bag", "ankle boot"]
+generate_demo(data, trainer.model)                      # save demo montage classification pic
 
-
-# initialize the optimizer and model
-print("[INFO] compiling model...")
-#opt = SGD(lr=INIT_LR, momentum=0.9, decay=INIT_LR / NUM_EPOCHS)
-opt = 'adam'
-model = model.build()
-model.compile(loss="categorical_crossentropy", optimizer=opt,
-              metrics=["accuracy"])
-
-model.summary()
-
-# train the network
-print("[INFO] training model...")
-H = model.fit(trainX, trainY,
-              validation_data=(testX, testY),
-              batch_size=BS, epochs=NUM_EPOCHS)
-
-# make predictions on the test set
-preds = model.predict(testX)
-
-# show a nicely formatted classification report
-print("[INFO] evaluating network...")
-print(classification_report(testY.argmax(axis=1), preds.argmax(axis=1),
-                            target_names=labelNames))
-
-model.save('cnn_model.h5')
-
-# plot the training loss and accuracy
-N = NUM_EPOCHS
-plt.style.use("ggplot")
-plt.figure()
-plt.plot(np.arange(0, N), H.history["loss"], label="train_loss")
-plt.plot(np.arange(0, N), H.history["val_loss"], label="val_loss")
-plt.plot(np.arange(0, N), H.history["acc"], label="train_acc")
-plt.plot(np.arange(0, N), H.history["val_acc"], label="val_acc")
-plt.title("Training Loss and Accuracy on Dataset")
-plt.xlabel("Epoch #")
-plt.ylabel("Loss/Accuracy")
-plt.legend(loc="lower left")
-plt.savefig("plot.png")
-
-
-
-# initialize our list of output images
-images = []
-
-# randomly select a few testing fashion items
-for i in np.random.choice(np.arange(0, len(testY)), size=(16,)):
-    # classify the clothing
-    probs = model.predict(testX[np.newaxis, i])
-    prediction = probs.argmax(axis=1)
-    label = labelNames[prediction[0]]
-
-    # extract the image from the testData
-    image = (testX[i] * 255).astype("uint8")
-
-    # initialize the text label color as green (correct)
-    color = (0, 255, 0)
-
-    # prediction is incorrect if it doesn't match the test data at that index
-    if prediction[0] != np.argmax(testY[i]):
-        color = (0, 0, 255)
-
-    # merge the channels into one image and resize the image from
-    # 28x28 to 96x96 so we can better see it and then draw the
-    # predicted label on the image
-    image = cv2.merge([image] * 3)
-    image = cv2.resize(image, (96, 96), interpolation=cv2.INTER_LINEAR)
-    cv2.putText(image, label, (5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75,
-                color, 2)
-
-    # add the image to our list of output images
-    images.append(image)
-
-# construct the montage for the images
-montage = build_montages(images, (96, 96), (4, 4))[0]
-
-# show the output montage
-#cv2.imshow("Fashion MNIST", montage)
-cv2.imwrite("montage.png", montage)
-
-#cv2.waitKey(0)
+save_model(trainer.model, "cnn_model")          # save the model to disk

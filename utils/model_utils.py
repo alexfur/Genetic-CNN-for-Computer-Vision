@@ -76,4 +76,4 @@ def generate_demo(data, model):
 
 
 def save_model(model, filename):        # cnn_model.h5
-    model.save(filename+".h5")
+    model.save("results/"+filename+".h5")
