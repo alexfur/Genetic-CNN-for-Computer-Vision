@@ -1,0 +1,4 @@
+dataset: fashion-mnist
+
+numEpochs: 5
+batchSize: 32
