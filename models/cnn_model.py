@@ -34,9 +34,9 @@ class CNNModel:
 
         # Layer 5
         model.add(Dense(10, activation='elu'))
-        model.add(Dropout(0.10))
 
         model.add(Activation('softmax'))
+
 
         # return the constructed network architecture
         return model

@@ -18,8 +18,11 @@ evolution = Evolution(config, data)
 
 evolution.initialise_population()
 
-for genome in evolution.genomes:
-    print(genome.dense_layers)
+
+print(evolution.genomes[0])
+evolution.mutate_one_gene(evolution.genomes[0])
+print(evolution.genomes[0])
+
 
 
 
