@@ -3,7 +3,6 @@ dataset: fashion-mnist
 numEpochs: 3
 batchSize: 32
 
-
 numGenerations: 3
 populationSize: 50
 

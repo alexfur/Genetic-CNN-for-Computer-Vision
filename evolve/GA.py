@@ -10,7 +10,6 @@ class Evolution():
         self.config = config
         self.numGenerations = config['numGenerations']
         self.populationSize = config['populationSize']
-        #self.gene_types = ['activation', 'dropout', 'kernel_size', 'filters']
         self.gene_types = list(config['hyperparams'])
 
 
@@ -54,12 +53,9 @@ class Evolution():
             - child's conv layer: split between mother and father
             - child's dense layer: activation function chosen randomly from mother or father """
 
-        print(genomeMom)
-        print(genomeDad)
-
         parents = [genomeMom, genomeDad]
-        random.shuffle(parents)
-
+        random.shuffle(parents)                                                         # shuffle parents so both get a fair chance to give out slightly more
+                                                                                        # conv layer genes since there are an odd number of conv layers.
         child_conv_layers = []
         for cl in range(self.config['numConvLayers']):                                  # crossover conv layers
             if (cl+1)%2 == 0:
@@ -74,6 +70,4 @@ class Evolution():
             else:
                 child_dense_layers.append(parents[1].dense_layers[dl])
 
-        print(Genome(child_conv_layers, child_dense_layers))
-
-        return Genome(child_conv_layers, child_dense_layers)                            # return child genome
+        return Genome(child_conv_layers, child_dense_layers, genome_mom=genomeMom, genome_dad=genomeDad)                            # return child genome
