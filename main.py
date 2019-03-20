@@ -18,11 +18,7 @@ evolution = Evolution(config, data)
 
 evolution.initialise_population()
 
-
-print(evolution.genomes[0])
-evolution.mutate_one_gene(evolution.genomes[0])
-print(evolution.genomes[0])
-
+evolution.crossover(evolution.genomes[0], evolution.genomes[1])
 
 
 

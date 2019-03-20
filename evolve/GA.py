@@ -26,7 +26,7 @@ class Evolution():
                     conv_layer.update({gene_type:gene_val})
                 conv_layers.append(conv_layer)
 
-            # now random params for dense layers (only activation paramater [gene type])
+            # now do random params for dense layers (only activation paramater [gene type])
             dense_layers = []
             for layer_num in range(self.config['numDenseLayers']):
                 dense_layer = {}
@@ -49,6 +49,31 @@ class Evolution():
         genome.layers[index_layer_to_mutate][gene_type_to_mutate] = new_gene_val        # set new value of gene we're mutating
 
 
-    def crossover(self, genomeMother, genomeFather):
-        ...
+    def crossover(self, genomeMom, genomeDad):                                          # TODO: this crossover logic might be too splicey
+        """ Create a child genome by mating two parent genomes
+            - child's conv layer: split between mother and father
+            - child's dense layer: activation function chosen randomly from mother or father """
 
+        print(genomeMom)
+        print(genomeDad)
+
+        parents = [genomeMom, genomeDad]
+        random.shuffle(parents)
+
+        child_conv_layers = []
+        for cl in range(self.config['numConvLayers']):                                  # crossover conv layers
+            if (cl+1)%2 == 0:
+                child_conv_layers.append(parents[0].conv_layers[cl])
+            else:
+                child_conv_layers.append(parents[1].conv_layers[cl])
+
+        child_dense_layers = []
+        for dl in range(self.config['numDenseLayers']):                                 # crossover dense layers
+            if (dl+1)%2 == 0:
+                child_dense_layers.append(parents[0].dense_layers[dl])
+            else:
+                child_dense_layers.append(parents[1].dense_layers[dl])
+
+        print(Genome(child_conv_layers, child_dense_layers))
+
+        return Genome(child_conv_layers, child_dense_layers)                            # return child genome
