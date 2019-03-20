@@ -1,5 +1,10 @@
 dataset: fashion-mnist
 
+evolvingMode: On
+
+numConvLayers: 3
+numDenseLayers: 2
+
 numEpochs: 2
 batchSize: 32
 
@@ -7,9 +12,7 @@ numGenerations: 3
 populationSize: 5
 mutateProb: 0.2
 sizeHallOfFame: 2
-
-numConvLayers: 3
-numDenseLayers: 2
+intelligentSurvival: On
 
 hyperparams:
   activation:   ["linear", "relu", "elu"]

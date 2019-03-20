@@ -6,7 +6,6 @@ class Genome():
     def __init__(self, conv_layers, dense_layers, genome_mom=None, genome_dad=None, fitness=None):
         self.conv_layers = conv_layers               # [{activation:, dropout:, kernel_size:, filters: }]
         self.dense_layers = dense_layers             # [{activation:}]
-        self.chromosome = {'conv_layers':conv_layers, 'dense_layers':dense_layers}
         self.layers = conv_layers + dense_layers
         self.parents = [genome_mom, genome_dad]
         self.fitness = 0

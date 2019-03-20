@@ -86,6 +86,9 @@ class Evolution():
                 if parent in bottom_half_fitnesses:                                                     # if parent in bottom half of fitnesses (right half of cache)
                     self.parents.remove(parent)
 
+        elif(self.config['intelligentSurvival']):                                                       # if intelligent survival function is enabled ...
+            ... # TODO
+
 
         # Crossover and mutation
         # ---------------------------
