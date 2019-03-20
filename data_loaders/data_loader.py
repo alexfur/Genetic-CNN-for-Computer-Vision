@@ -8,10 +8,10 @@ def load_and_preprocess_data(config=None):
     print("[INFO] loading Fashion MNIST...")
     ((trainX, trainY), (testX, testY)) = fashion_mnist.load_data()           # clothing item, label
 
-    trainX = trainX[:10000]
-    trainY = trainY[:10000]
-    testX = testX[:10000]
-    testY = testY[:10000]
+    trainX = trainX[:1000]
+    trainY = trainY[:1000]
+    testX = testX[:1000]
+    testY = testY[:1000]
 
     trainX = trainX.reshape((trainX.shape[0], 28, 28, 1))
     testX = testX.reshape((testX.shape[0], 28, 28, 1))

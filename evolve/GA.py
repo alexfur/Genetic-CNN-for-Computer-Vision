@@ -3,16 +3,19 @@ from models.cnn_model import CNNModel
 import random
 from evolve.genotype import Genome
 from trainers.cnn_trainer import Trainer
+import logging
+
 
 class Evolution():
     def __init__(self, config, data):
-        self.genomes = []                                   # population of genomes (each one is a set of CNN hyperparameters)
-        self.data = data                                    # TODO: Is data list necessary here?
+        self.parents = []                                   # population of genomes (each one is a set of CNN hyperparameters)
         self.config = config
+        self.data = data
         self.numGenerations = config['numGenerations']
         self.populationSize = config['populationSize']
         self.mutateProb = config['mutateProb']
         self.gene_types = list(config['hyperparams'])
+        self.scored_cache = []                            # (individial, fitness_score) --> global/elitist cache of the population
 
 
     def initialise_population(self):                        # initialise population with random parameter choices
@@ -35,7 +38,7 @@ class Evolution():
                 dense_layer.update({'activation':gene_val})
                 dense_layers.append(dense_layer)
 
-            self.genomes.append(Genome(conv_layers, dense_layers))
+            self.parents.append(Genome(conv_layers, dense_layers))
 
 
     def train_and_score(self, genome):
@@ -49,52 +52,66 @@ class Evolution():
         trainer = Trainer(CNNModel.buildForEvolution(genome), self.config, self.data)
         trainer.train()                                                                                 # train individual using training data
         score = trainer.model.evaluate(self.data['testX'], self.data['testY'], verbose=0)               # score individual using test data
-        print("score : "+str(score[1]))                                                                 # 1=accuracy, 0=loss.
+        logging.info("Score : "+str(score[1]))                                                                 # 1=accuracy, 0=loss.
         genome.fitness = score[1]                                                                       # set the individual's fitness variable
 
         return score
 
-    def evolvePopulation(self):
+    def evolvePopulation(self, gen):
         """
         Evolve the population of genomes (candidate parameter-sets).
         :return:
         """
-        scored_cache = [()]                                                                             # (individial, fitness_score)
 
-        # <---- TRAIN AND SCORE POPULATION ---->
+        logging.info("Generation {curGen} of {totGens}".format(curGen=gen + 1, totGens=self.numGenerations))
 
-        for individual in self.genomes:
-            if(individual in scored_cache):                                                             # if p in cache
-                ...
-            else:
-                score = self.train_and_score(individual)                                                # train individual and get fitness
-                scored_cache.append((individual,score))                                                 # add {individual,fitness} to the cache
+        # Train and score population
+        # ---------------------------
+        logging.info("Scoring each member of the population...")
+        for individual in self.parents:                                                                         # train and score population
+            self.train_and_score(individual)
 
-
-        scored_cache = [x[0] for x in sorted(scored_cache, key=lambda x: x[1], reverse=True)]           # sort scored population on scores
+        #graded = [(self.train_and_score(individual), individual) for individual in self.parents]               # train and score population
+        #graded = [x[1] for x in sorted(self.scored_cache, key=lambda x: x[0], reverse=True)]                   # sort on scores
 
 
-        # <---- SURVIVAL OF THE FITTEST ---->
+        # Survival of the fittest
+        # ---------------------------
+        logging.info("Applying survival of the fittest...")
+        self.parents = self.parents[:len(self.parents)//2]
+        # bottom_half_fitnesses = self.scored_cache[:len(self.scored_cache)//2]
+        # for parent in self.parents:
+        #     if parent in [i[1] for i in bottom_half_fitnesses]:
+        #         self.parents.remove(parent)                                                             # remove parent if it's in the bottom fitness half of the cache
 
-        # TODO
 
+        # Crossover and mutation
+        # ---------------------------
+        logging.info("Applying crossover and mutation...")
 
-        # <---- CROSSOVER AND MUTATION ---->
+        num_kids_needed = self.populationSize - len(self.parents)
+        print("num kids needed: "+str(num_kids_needed))
 
-        mating_pool = scored_cache[self.populationSize / 2:]
-        for i in range(self.populationSize/2):                                                           # look at top (fittest) half of the population for breeding partners
+        children = []
+        mating_pool = self.parents
+        while(len(children) < num_kids_needed):                                                       # look at top (fittest) half of the population for breeding partners
             parent1 = random.choice(mating_pool)
             parent2 = random.choice(mating_pool)
-            while(parent1 == parent2):                                                                   # ensure that two different parents will be mating
+            while(parent1 == parent2 and self.populationSize > 2):                                    # ensure that two different parents will be mating
                 parent1 = random.choice(mating_pool)
-
-            child = self.crossover(parent1, parent2)                                                     # crossover parents, produce child
+            child = self.crossover(parent1, parent2)                                                  # crossover parents, produce child
             if(self.mutateProb > random.uniform(0,1)):
-                self.mutate_one_gene(child)                                                              # random chance that child is mutated
+                self.mutate_one_gene(child)                                                           # random chance that child is mutated
+            children.append(child)                                                                    # add child to list
 
 
+        self.parents.extend(children)                                                                 # add children to population
 
-    # gene == paramater
+        if(gen == self.numGenerations-1):
+            logging.info("Evolution complete.")
+            #return Trainer.compile_model(CNNModel.buildForEvolution(self.scored_cache[0][0]))
+
+
     def mutate_one_gene(self, genome):                                                  # TODO: account for random new_gene_val being the same as the old val (while loop)
         layer_to_mutate = random.choice(genome.layers)                                  # which layer to mutate?
         index_layer_to_mutate = genome.layers.index(layer_to_mutate)                    # index of chosen layer to mutate

@@ -1,4 +1,9 @@
 import yaml
+import os
+import tensorflow as tf
+tf.logging.set_verbosity(tf.logging.ERROR)
+
+
 from data_loaders.data_loader import load_and_preprocess_data
 from models.cnn_model import CNNModel
 from trainers.cnn_trainer import Trainer
@@ -9,22 +14,20 @@ import logging
 from evolve.GA import Evolution
 from evolve.genotype import Genome
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
+logging.getLogger().setLevel(logging.INFO)
 
 config = yaml.safe_load(open('configs/config.yaml'))
-
 numGenerations = config['numGenerations']
-
 data = load_and_preprocess_data(config)                  # get fashion mnist data
 
 evolution = Evolution(config, data)
-
 evolution.initialise_population()
 
 for gen in range(numGenerations):
-    print(logging.info("Generation {curGen} of {totGens}".format(curGen=gen+1, totGens=numGenerations)))
-    evolution.evolvePopulation()
+    evolution.evolvePopulation(gen)
 
-
+print(evolution.parents)
 
 # trainer = Trainer(CNNModel.build(), config, data)       # initialise trainer with a newly initialised model
 #

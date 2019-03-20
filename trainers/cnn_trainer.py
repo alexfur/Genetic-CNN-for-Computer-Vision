@@ -7,16 +7,17 @@ class Trainer():
 
     # compile model
     def compile_model(self):
-        print("[INFO] compiling model...")
+        #print("[INFO] compiling model...")
         self.model.compile(loss="categorical_crossentropy", optimizer='adam',
                       metrics=["accuracy"])
+        return self.model
 
     # train the network
     def train(self):
-        print("[INFO] training model...")
+        #print("[INFO] training model...")
         return self.model.fit(self.data['trainX'], self.data['trainY'],
                       validation_data=(self.data['testX'], self.data['testY']),
-                      batch_size=self.config['batchSize'], epochs=self.config['numEpochs'])
+                      batch_size=self.config['batchSize'], epochs=self.config['numEpochs'], verbose=0)
 
 
 
