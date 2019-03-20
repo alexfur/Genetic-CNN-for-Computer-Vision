@@ -1,12 +1,12 @@
 dataset: fashion-mnist
 
-numEpochs: 3
+numEpochs: 2
 batchSize: 32
 
-numGenerations: 10
-populationSize: 15
+numGenerations: 3
+populationSize: 5
 mutateProb: 0.2
-sizeHallOfFame: 5
+sizeHallOfFame: 2
 
 numConvLayers: 3
 numDenseLayers: 2
