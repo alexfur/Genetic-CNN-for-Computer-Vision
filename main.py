@@ -5,21 +5,24 @@ from trainers.cnn_trainer import Trainer
 from utils.model_utils import *
 from keras.models import load_model
 from keras.utils import plot_model
-
+import logging
 from evolve.GA import Evolution
 from evolve.genotype import Genome
 
 
-config = yaml.safe_load(open('configs/config.yaml'))    # get config
+config = yaml.safe_load(open('configs/config.yaml'))
 
-data = load_and_preprocess_data(config)                 # get fashion mnist data
+numGenerations = config['numGenerations']
+
+data = load_and_preprocess_data(config)                  # get fashion mnist data
 
 evolution = Evolution(config, data)
 
 evolution.initialise_population()
 
-evolution.crossover(evolution.genomes[0], evolution.genomes[1])
-
+for gen in range(numGenerations):
+    print(logging.info("Generation {curGen} of {totGens}".format(curGen=gen+1, totGens=numGenerations)))
+    evolution.evolvePopulation()
 
 
 

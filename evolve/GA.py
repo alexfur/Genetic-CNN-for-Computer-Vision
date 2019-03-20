@@ -2,6 +2,7 @@ from trainers.cnn_trainer import Trainer
 from models.cnn_model import CNNModel
 import random
 from evolve.genotype import Genome
+from trainers.cnn_trainer import Trainer
 
 class Evolution():
     def __init__(self, config, data):
@@ -35,11 +36,44 @@ class Evolution():
 
             self.genomes.append(Genome(conv_layers, dense_layers))
 
-    def train_and_score(genome, self):
-        ...
-        #trainer = Trainer(CNNModel.build(activation=), config, data)
 
-    # gene = paramater
+    def train_and_score(self, genome):
+        """
+        Train and score a single individual.
+        Score (fitness) is equal to a model's accuracy on test data predictions.
+        :param genome:
+        :return score:
+        """
+
+        trainer = Trainer(CNNModel.buildForEvolution(genome), self.config, self.data)
+        trainer.train()                                                                                 # train individual using training data
+        score = trainer.model.evaluate(self.data['testX'], self.data['testY'], verbose=0)               # score individual using test data
+        print("score : "+str(score[1]))                                                                 # 1=accuracy, 0=loss.
+        genome.fitness = score[1]                                                                       # set the individual's fitness variable
+
+        return score
+
+    def evolvePopulation(self):
+        """
+        Evolve the population of genomes (candidate parameter-sets).
+        :return:
+        """
+
+        scored = [(genome, self.train_and_score(genome)) for genome in self.genomes]                    # train and get score of each individual in population
+
+        #scored = [x[1] for x in sorted(graded, key=lambda x: x[0], reverse=True)]                       # sort on scores
+
+
+
+
+        for individual in self.genomes:
+            self.train_and_score(individual)
+
+
+
+
+
+    # gene == paramater
     def mutate_one_gene(self, genome):                                                  # TODO: account for random new_gene_val being the same as the old val (while loop)
         layer_to_mutate = random.choice(genome.layers)                                  # which layer to mutate?
         index_layer_to_mutate = genome.layers.index(layer_to_mutate)                    # index of chosen layer to mutate
