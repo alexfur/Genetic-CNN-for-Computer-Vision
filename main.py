@@ -25,7 +25,14 @@ evolution.initialise_population()
 for gen in range(numGenerations):
     evolution.evolvePopulation(gen)
 
+print(evolution.hall_of_fame.getFitness(0))
+print(evolution.hall_of_fame.getSolution(0))
 
+print(evolution.hall_of_fame.getFitness(1))
+print(evolution.hall_of_fame.getSolution(1))
+
+print(evolution.hall_of_fame.getFitness(4))
+print(evolution.hall_of_fame.getSolution(4))
 
 # trainer = Trainer(CNNModel.build(), config, data)       # initialise trainer with a newly initialised model
 #

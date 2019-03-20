@@ -2,27 +2,33 @@ import random, logging
 from models.cnn_model import CNNModel
 from evolve.genotype import Genome
 from trainers.cnn_trainer import Trainer
+from evolve.hall_of_fame import HallOfFame
 
 class Evolution():
+    """
+    Class for handling the evolution of hyper-parameters for a CNN
+    """
     def __init__(self, config, data):
-        self.parents = []                                   # population of genomes (each one is a set of CNN hyperparameters)
+        self.parents = []                                                                      # population of genomes (each one is a set of CNN hyperparameters)
         self.config = config
         self.data = data
         self.numGenerations = config['numGenerations']
         self.populationSize = config['populationSize']
         self.mutateProb = config['mutateProb']
         self.gene_types = list(config['hyperparams'])
-        self.hall_of_fame = []                              # store best solutions that ever existed
+        self.size_hall_of_fame = config['sizeHallOfFame']
+        self.hall_of_fame = HallOfFame(size=self.size_hall_of_fame)                             # store best solutions that ever existed
 
 
-    def initialise_population(self):                        # initialise population with random parameter choices
+    def initialise_population(self):                                                            # initialise population with random parameter choices
         """
         Initialise a population of genomes (candidate CNN hyperparameter sets)
+            - First do random params for convolutional layers (all possible parameters/genes)
+            - Then do random params for dense layers (only activation parameter/genes)
         """
         for i in range(0, self.populationSize):
 
-            # first do random params for convolutional layers (all possible parameters [gene types])
-            conv_layers = []
+            conv_layers = []                                                                    # first do random params for convolutional layers (all possible parameters [gene types])
             for layer_num in range(self.config['numConvLayers']):
                 conv_layer = {}
                 for gene_type in self.config['hyperparams']:                                    # i.e. activation is a gene type
@@ -30,8 +36,7 @@ class Evolution():
                     conv_layer.update({gene_type:gene_val})
                 conv_layers.append(conv_layer)
 
-            # now do random params for dense layers (only activation paramater [gene type])
-            dense_layers = []
+            dense_layers = []                                                                   # now do random params for dense layers (only activation paramater [gene type])
             for layer_num in range(self.config['numDenseLayers']):
                 dense_layer = {}
                 gene_val = random.choice(self.config['hyperparams']['activation'])
@@ -49,7 +54,7 @@ class Evolution():
         trainer = Trainer(CNNModel.buildForEvolution(genome), self.config, self.data)
         trainer.train()                                                                                 # train individual using training data
         score = trainer.model.evaluate(self.data['testX'], self.data['testY'], verbose=0)               # score individual using test data
-        logging.info("Score : "+str(score[1]))                                                                 # 1=accuracy, 0=loss.
+        logging.info("Score : "+str(score[1]))                                                          # 1=accuracy, 0=loss.
         genome.fitness = score[1]                                                                       # set the individual's fitness variable
 
         return score
@@ -70,6 +75,7 @@ class Evolution():
             cache.append((individual, individual.fitness))
 
         cache = [x[0] for x in sorted(cache, key=lambda x: x[1], reverse=True)]                         # sort cache into networks, in ascending order of scores (note: no longer list of tuples)
+        self.hall_of_fame.updateHall(cache)
 
         # Survival of the fittest (Selection)
         # ---------------------------
@@ -97,16 +103,23 @@ class Evolution():
             if(self.mutateProb > random.uniform(0,1)):
                 self.mutate_one_gene(child)                                                           # random chance that child is mutated
             children.append(child)                                                                    # add child to list
-
-
         self.parents.extend(children)                                                                 # add children to population
+
+        logging.info("\n")
 
         if(gen == self.numGenerations-1):
             logging.info("Evolution complete.")
             #return Trainer.compile_model(CNNModel.buildForEvolution(self.scored_cache[0][0]))
 
 
+
     def mutate_one_gene(self, genome):                                                  # TODO: account for random new_gene_val being the same as the old val (use while loop)
+        """
+        Mutate a gene (CNN hyper-paramater) within a genome.
+            - First choose a random layer to mutate.
+            - Then choose a random gene-type (i.e. activation or dropout) to mutate.
+            - Then choose a random new value for the gene in that layer based on its type.
+        """
         layer_to_mutate = random.choice(genome.layers)                                  # which layer to mutate?
         index_layer_to_mutate = genome.layers.index(layer_to_mutate)                    # index of chosen layer to mutate
         gene_type_to_mutate = random.choice(list(layer_to_mutate))                      # mutate which param? Activation? Dropout?
@@ -117,8 +130,8 @@ class Evolution():
     def crossover(self, genomeMom, genomeDad):                                          # TODO: this crossover logic might be too splicey?
         """
         Create a child genome by mating two parent genomes.
-            - child's conv layer: split between mother and father.
-            - child's dense layer: activation function chosen randomly
+            - Child's conv layer: split between mother and father.
+            - Child's dense layer: activation function chosen randomly
               from mother or father.
         """
 
