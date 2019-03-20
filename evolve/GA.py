@@ -11,6 +11,7 @@ class Evolution():
         self.config = config
         self.numGenerations = config['numGenerations']
         self.populationSize = config['populationSize']
+        self.mutateProb = config['mutateProb']
         self.gene_types = list(config['hyperparams'])
 
 
@@ -58,18 +59,38 @@ class Evolution():
         Evolve the population of genomes (candidate parameter-sets).
         :return:
         """
+        scored_cache = [()]                                                                             # (individial, fitness_score)
 
-        scored = [(genome, self.train_and_score(genome)) for genome in self.genomes]                    # train and get score of each individual in population
-
-        #scored = [x[1] for x in sorted(graded, key=lambda x: x[0], reverse=True)]                       # sort on scores
-
-
-
+        # <---- TRAIN AND SCORE POPULATION ---->
 
         for individual in self.genomes:
-            self.train_and_score(individual)
+            if(individual in scored_cache):                                                             # if p in cache
+                ...
+            else:
+                score = self.train_and_score(individual)                                                # train individual and get fitness
+                scored_cache.append((individual,score))                                                 # add {individual,fitness} to the cache
 
 
+        scored_cache = [x[0] for x in sorted(scored_cache, key=lambda x: x[1], reverse=True)]           # sort scored population on scores
+
+
+        # <---- SURVIVAL OF THE FITTEST ---->
+
+        # TODO
+
+
+        # <---- CROSSOVER AND MUTATION ---->
+
+        mating_pool = scored_cache[self.populationSize / 2:]
+        for i in range(self.populationSize/2):                                                           # look at top (fittest) half of the population for breeding partners
+            parent1 = random.choice(mating_pool)
+            parent2 = random.choice(mating_pool)
+            while(parent1 == parent2):                                                                   # ensure that two different parents will be mating
+                parent1 = random.choice(mating_pool)
+
+            child = self.crossover(parent1, parent2)                                                     # crossover parents, produce child
+            if(self.mutateProb > random.uniform(0,1)):
+                self.mutate_one_gene(child)                                                              # random chance that child is mutated
 
 
 

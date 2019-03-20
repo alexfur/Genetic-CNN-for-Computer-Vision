@@ -5,6 +5,7 @@ batchSize: 32
 
 numGenerations: 3
 populationSize: 50
+mutateProb:       0.2
 
 numConvLayers: 3
 numDenseLayers: 2
