@@ -19,3 +19,4 @@ class Trainer():
                       batch_size=self.config['batchSize'], epochs=self.config['numEpochs'])
 
 
+
