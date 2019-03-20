@@ -12,7 +12,7 @@ numGenerations: 3
 populationSize: 5
 mutateProb: 0.2
 sizeHallOfFame: 2
-intelligentSurvival: On
+intelligentSurvival: Off
 
 hyperparams:
   activation:   ["linear", "relu", "elu"]

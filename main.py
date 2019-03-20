@@ -30,24 +30,24 @@ if config['evolvingMode']:
 
     trainer = Trainer(CNNModel.buildForEvolution(best_evolved_genome), config, data)
     generate_model_summary(trainer.model)
-    training_history = trainer.train()                                                                                  # train individual using training data
+    training_history = trainer.train()
     generate_classification_report(trainer.model, data)
-    generate_training_stats_plot(config, training_history)
-    generate_demo(data, trainer.model)
-    save_model(trainer.model, "cnn_model")  # save the model to disk
+    generate_training_stats_plot(config, training_history, resultsDir)
+    generate_demo(data, trainer.model, resultsDir)
+    save_model(trainer.model, resultsDir)
     score = trainer.model.evaluate(data['trainX'], data['trainY'], verbose=0)
-    print("Score: "+str(score[1]))                                                                                      # 1=accuracy, 0=loss.
+    print("Score: "+str(score[1]))
 else:
     resultsDir = 'results/no-evolution/'
     trainer = Trainer(CNNModel.buildNoEvolution(), config, data)                                                        # initialise trainer with a newly initialised model
     generate_model_summary(trainer.model)                                                                               # summary of the model structure
     training_history = trainer.train()                                                                                  # train the model, save historical stats over epochs
     generate_classification_report(trainer.model, data)                                                                 # make predictions on test set and generate corresponding classification report
-    generate_training_stats_plot(config, training_history)                                                              # plot the training loss and accuracy
-    generate_demo(data, trainer.model)                                                                                  # save demo montage classification pic
-    save_model(trainer.model, "cnn_model")  # save the model to disk
+    generate_training_stats_plot(config, training_history, resultsDir)                                                  # plot the training loss and accuracy
+    generate_demo(data, trainer.model, resultsDir)                                                                      # save demo montage classification pic
+    save_model(trainer.model, resultsDir)                                                                               # save the model to disk
     score = trainer.model.evaluate(data['trainX'], data['trainY'], verbose=0)                                           # compute model score (accuracy). This can be compared against best evolved solution's score.
-    print("Score: "+str(score[1]))                                                                                      # 1=accuracy, 0=loss.
+    print("Score: "+str(score[1]))                                                                                      # 1=accuracy, 0=loss
 
 
 

@@ -21,7 +21,7 @@ def generate_classification_report(model, data):
 
 
 # plot the training loss and accuracy
-def generate_training_stats_plot(config, trainer):
+def generate_training_stats_plot(config, trainer, results_dir):
     N = config['numEpochs']
     plt.style.use("ggplot")
     plt.figure()
@@ -33,10 +33,10 @@ def generate_training_stats_plot(config, trainer):
     plt.xlabel("Epoch #")
     plt.ylabel("Loss/Accuracy")
     plt.legend(loc="lower left")
-    plt.savefig("results/plot.png")
+    plt.savefig(results_dir+"plot.png")
 
 
-def generate_demo(data, model):
+def generate_demo(data, model, results_dir):
     # initialize our list of output images
     images = []
 
@@ -72,8 +72,8 @@ def generate_demo(data, model):
     montage = build_montages(images, (96, 96), (4, 4))[0]
 
     # show the output montage
-    cv2.imwrite("results/demo_montage.png", montage)
+    cv2.imwrite(results_dir+"demo_montage.png", montage)
 
 
-def save_model(model, filename):        # cnn_model.h5
-    model.save("results/"+filename+".h5")
+def save_model(model, results_dir):        # cnn_model.h5
+    model.save(results_dir+'cnn_model.h5')
