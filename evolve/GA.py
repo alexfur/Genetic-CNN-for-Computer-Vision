@@ -1,10 +1,7 @@
-from trainers.cnn_trainer import Trainer
+import random, logging
 from models.cnn_model import CNNModel
-import random
 from evolve.genotype import Genome
 from trainers.cnn_trainer import Trainer
-import logging
-
 
 class Evolution():
     def __init__(self, config, data):
@@ -15,10 +12,13 @@ class Evolution():
         self.populationSize = config['populationSize']
         self.mutateProb = config['mutateProb']
         self.gene_types = list(config['hyperparams'])
-        self.scored_cache = []                            # (individial, fitness_score) --> global/elitist cache of the population
+        self.hall_of_fame = []                              # store best solutions that ever existed
 
 
     def initialise_population(self):                        # initialise population with random parameter choices
+        """
+        Initialise a population of genomes (candidate CNN hyperparameter sets)
+        """
         for i in range(0, self.populationSize):
 
             # first do random params for convolutional layers (all possible parameters [gene types])
@@ -45,10 +45,7 @@ class Evolution():
         """
         Train and score a single individual.
         Score (fitness) is equal to a model's accuracy on test data predictions.
-        :param genome:
-        :return score:
         """
-
         trainer = Trainer(CNNModel.buildForEvolution(genome), self.config, self.data)
         trainer.train()                                                                                 # train individual using training data
         score = trainer.model.evaluate(self.data['testX'], self.data['testY'], verbose=0)               # score individual using test data
@@ -60,29 +57,28 @@ class Evolution():
     def evolvePopulation(self, gen):
         """
         Evolve the population of genomes (candidate parameter-sets).
-        :return:
         """
-
         logging.info("Generation {curGen} of {totGens}".format(curGen=gen + 1, totGens=self.numGenerations))
 
         # Train and score population
         # ---------------------------
         logging.info("Scoring each member of the population...")
-        for individual in self.parents:                                                                         # train and score population
+
+        cache = []                                                                                      # (individual, fitness)
+        for individual in self.parents:                                                                 # train and score population
             self.train_and_score(individual)
+            cache.append((individual, individual.fitness))
 
-        #graded = [(self.train_and_score(individual), individual) for individual in self.parents]               # train and score population
-        #graded = [x[1] for x in sorted(self.scored_cache, key=lambda x: x[0], reverse=True)]                   # sort on scores
+        cache = [x[0] for x in sorted(cache, key=lambda x: x[1], reverse=True)]                         # sort cache into networks, in ascending order of scores (note: no longer list of tuples)
 
-
-        # Survival of the fittest
+        # Survival of the fittest (Selection)
         # ---------------------------
         logging.info("Applying survival of the fittest...")
-        self.parents = self.parents[:len(self.parents)//2]
-        # bottom_half_fitnesses = self.scored_cache[:len(self.scored_cache)//2]
-        # for parent in self.parents:
-        #     if parent in [i[1] for i in bottom_half_fitnesses]:
-        #         self.parents.remove(parent)                                                             # remove parent if it's in the bottom fitness half of the cache
+        bottom_half_fitnesses = cache[self.populationSize//2:]
+        if(gen < 10):
+            for parent in self.parents:
+                if parent in bottom_half_fitnesses:                                                     # if parent in bottom half of fitnesses (right half of cache)
+                    self.parents.remove(parent)
 
 
         # Crossover and mutation
@@ -90,8 +86,6 @@ class Evolution():
         logging.info("Applying crossover and mutation...")
 
         num_kids_needed = self.populationSize - len(self.parents)
-        print("num kids needed: "+str(num_kids_needed))
-
         children = []
         mating_pool = self.parents
         while(len(children) < num_kids_needed):                                                       # look at top (fittest) half of the population for breeding partners
@@ -112,7 +106,7 @@ class Evolution():
             #return Trainer.compile_model(CNNModel.buildForEvolution(self.scored_cache[0][0]))
 
 
-    def mutate_one_gene(self, genome):                                                  # TODO: account for random new_gene_val being the same as the old val (while loop)
+    def mutate_one_gene(self, genome):                                                  # TODO: account for random new_gene_val being the same as the old val (use while loop)
         layer_to_mutate = random.choice(genome.layers)                                  # which layer to mutate?
         index_layer_to_mutate = genome.layers.index(layer_to_mutate)                    # index of chosen layer to mutate
         gene_type_to_mutate = random.choice(list(layer_to_mutate))                      # mutate which param? Activation? Dropout?
@@ -120,10 +114,13 @@ class Evolution():
         genome.layers[index_layer_to_mutate][gene_type_to_mutate] = new_gene_val        # set new value of gene we're mutating
 
 
-    def crossover(self, genomeMom, genomeDad):                                          # TODO: this crossover logic might be too splicey
-        """ Create a child genome by mating two parent genomes
-            - child's conv layer: split between mother and father
-            - child's dense layer: activation function chosen randomly from mother or father """
+    def crossover(self, genomeMom, genomeDad):                                          # TODO: this crossover logic might be too splicey?
+        """
+        Create a child genome by mating two parent genomes.
+            - child's conv layer: split between mother and father.
+            - child's dense layer: activation function chosen randomly
+              from mother or father.
+        """
 
         parents = [genomeMom, genomeDad]
         random.shuffle(parents)                                                         # shuffle parents so both get a fair chance to give out slightly more
@@ -142,4 +139,5 @@ class Evolution():
             else:
                 child_dense_layers.append(parents[1].dense_layers[dl])
 
-        return Genome(child_conv_layers, child_dense_layers, genome_mom=genomeMom, genome_dad=genomeDad)                            # return child genome
+        return Genome(child_conv_layers, child_dense_layers,
+                      genome_mom=genomeMom, genome_dad=genomeDad)                      # return child genome

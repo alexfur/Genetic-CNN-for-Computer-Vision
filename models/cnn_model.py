@@ -17,7 +17,6 @@ class CNNModel:
         conv_layers = genome.conv_layers
         dense_layers = genome.dense_layers
 
-
         # Layer 1
         model.add(Conv2D(filters=conv_layers[0]['filters'], kernel_size=conv_layers[0]['kernel_size'], padding='same', activation=conv_layers[0]['activation'], input_shape=(28,28,1)))
         model.add(MaxPooling2D(pool_size=2))

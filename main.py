@@ -2,8 +2,6 @@ import yaml
 import os
 import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.ERROR)
-
-
 from data_loaders.data_loader import load_and_preprocess_data
 from models.cnn_model import CNNModel
 from trainers.cnn_trainer import Trainer
@@ -27,7 +25,7 @@ evolution.initialise_population()
 for gen in range(numGenerations):
     evolution.evolvePopulation(gen)
 
-print(evolution.parents)
+
 
 # trainer = Trainer(CNNModel.build(), config, data)       # initialise trainer with a newly initialised model
 #
