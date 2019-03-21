@@ -12,8 +12,6 @@ sklearn = "*"
 numpy = "*"
 tensorflow = "*"
 matplotlib = "*"
-imutils = "*"
-opencv-contrib-python = "*"
 pydot = "*"
 
 [requires]
