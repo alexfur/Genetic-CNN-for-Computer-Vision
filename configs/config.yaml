@@ -5,14 +5,14 @@ evolvingMode: On
 numConvLayers: 3
 numDenseLayers: 2
 
-numEpochs: 2
+numEpochs: 5
 batchSize: 32
 
-numGenerations: 3
-populationSize: 2
+numGenerations: 20
+populationSize: 50
 mutateProb: 0.2
-sizeHallOfFame: 2
-intelligentSurvival: On
+sizeHallOfFame: 5
+intelligentSurvival: Off
 
 hyperparams:
   activation:   ["linear", "relu", "elu"]

@@ -1,4 +1,7 @@
 class Trainer():
+    """
+    Todo
+    """
     def __init__(self, model, config, data):
         self.model = model
         self.config = config
