@@ -9,10 +9,10 @@ numEpochs: 2
 batchSize: 32
 
 numGenerations: 3
-populationSize: 5
+populationSize: 2
 mutateProb: 0.2
 sizeHallOfFame: 2
-intelligentSurvival: Off
+intelligentSurvival: On
 
 hyperparams:
   activation:   ["linear", "relu", "elu"]

@@ -3,6 +3,10 @@ from models.cnn_model import CNNModel
 from evolve.genotype import Genome
 from trainers.cnn_trainer import Trainer
 from evolve.hall_of_fame import HallOfFame
+from keras.models import Input, Model
+from keras.layers import Dense
+from keras import optimizers
+import numpy as np
 
 class Evolution():
     """
@@ -74,7 +78,7 @@ class Evolution():
             self.train_and_score(individual)
             cache.append((individual, individual.fitness))
 
-        cache = [x[0] for x in sorted(cache, key=lambda x: x[1], reverse=True)]                         # sort cache into networks, in ascending order of scores (note: no longer list of tuples)
+        cache = [x[0] for x in sorted(cache, key=lambda x: x[1], reverse=True)]                         # sort cache into genomes, in ascending order of scores (note: no longer list of tuples)
         self.hall_of_fame.updateHall(cache)
 
         # Survival of the fittest (Selection)
@@ -87,20 +91,34 @@ class Evolution():
                     self.parents.remove(parent)
 
         elif(self.config['intelligentSurvival']):                                                       # if intelligent survival function is enabled ...
+
+            # Meta-model idea is as follows: model(parent_x) = predicted_child_score
+
+            # First prepare datasets (X=[parent], Y=[child_score])
+
             population = self.parents
-            parents_X = []                                                                              # parents dataset
-            child_scores_Y = []                                                                         # child scores dataset
+            parents_X = []                                                                                              # parents dataset
+            child_scores_Y = []                                                                                         # child scores dataset
             for child in population:
-                parents_X.append(child.parents[0])
+                parents_X.append(child.parents[0])                                                                      # TODO: child.parents[0] seems to be NoneType so I can't access layers variable
                 child_scores_Y.append(child.fitness)
                 parents_X.append(child.parents[1])
                 child_scores_Y.append(child.fitness)
 
-            # TODO: Create and train a meta-model (neural network?)
-            # model(parent_x) = predicted_child_score
+            # Now create a meta-model.
+
+            # TODO: Meta-model should be a neural network I think. I've just put a linear regression here for now.
+            inputs = Input(shape=(1,))
+            output = Dense(1, activation='linear')(inputs)
+            linear_model = Model(inputs, output)
+            linear_model.compile(optimizer=optimizers.RMSprop(lr=0.1), loss='mean_squared_error', metrics=['mae'])
+            linear_model.fit(x=np.array(parents_X), y=np.array(child_scores_Y), epochs=50, verbose=0)                   # TODO: plug in parent.layers here instead?
+            print(linear_model.predict(self.parents[0]))
+
+            # Now use the meta-model to predict which parents we can remove based on predicting that they'll have weak children
 
             for parent in self.parents:
-                predicted_child_fitness = MM(parent)
+                predicted_child_fitness = linear_model.predict(parent)
                 if parent in bottom_half_fitnesses:
                     if predicted_child_fitness in bottom_half_fitnesses:
                         self.parents.remove(parent)
