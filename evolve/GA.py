@@ -87,7 +87,27 @@ class Evolution():
                     self.parents.remove(parent)
 
         elif(self.config['intelligentSurvival']):                                                       # if intelligent survival function is enabled ...
-            ... # TODO
+            population = self.parents
+            parents_X = []                                                                              # parents dataset
+            child_scores_Y = []                                                                         # child scores dataset
+            for child in population:
+                parents_X.append(child.parents[0])
+                child_scores_Y.append(child.fitness)
+                parents_X.append(child.parents[1])
+                child_scores_Y.append(child.fitness)
+
+            # TODO: Create and train a meta-model (neural network?)
+            # model(parent_x) = predicted_child_score
+
+            for parent in self.parents:
+                predicted_child_fitness = MM(parent)
+                if parent in bottom_half_fitnesses:
+                    if predicted_child_fitness in bottom_half_fitnesses:
+                        self.parents.remove(parent)
+                else:
+                    if predicted_child_fitness in bottom_half_fitnesses:
+                        self.parents.remove(parent)
+
 
 
         # Crossover and mutation
@@ -103,6 +123,7 @@ class Evolution():
             while(parent1 == parent2 and self.populationSize > 2):                                    # ensure that two different parents will be mating
                 parent1 = random.choice(mating_pool)
             child = self.crossover(parent1, parent2)                                                  # crossover parents, produce child
+            child.parents = [parent1, parent2]                                                        # set these to be the child's parents
             if(self.mutateProb > random.uniform(0,1)):
                 self.mutate_one_gene(child)                                                           # random chance that child is mutated
             children.append(child)                                                                    # add child to list
@@ -156,4 +177,4 @@ class Evolution():
                 child_dense_layers.append(parents[1].dense_layers[dl])
 
         return Genome(child_conv_layers, child_dense_layers,
-                      genome_mom=genomeMom, genome_dad=genomeDad)                      # return child genome
+                      genome_mom=genomeMom, genome_dad=genomeDad)                       # return child genome
